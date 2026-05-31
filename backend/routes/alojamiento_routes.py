@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from backend.sessions import validate_session
 
@@ -47,6 +48,41 @@ def get_alojamiento(id):
     if not alojamiento:
         return jsonify({'error': 'Alojamiento no encontrado'}), 404
     return jsonify(_alojamiento_to_dict(alojamiento))
+
+
+@alojamiento_bp.route('/alojamientos/<int:id>/disponibilidad', methods=['GET'])
+def check_disponibilidad(id):
+    alojamiento = app_instance.get_alojamiento(id)
+    if not alojamiento:
+        return jsonify({'error': 'Alojamiento no encontrado'}), 404
+
+    fecha_entrada = request.args.get('fecha_entrada')
+    fecha_salida = request.args.get('fecha_salida')
+
+    if not fecha_entrada or not fecha_salida:
+        return jsonify({'error': 'Parametros obligatorios: fecha_entrada, fecha_salida'}), 400
+
+    try:
+        entrada = datetime.strptime(fecha_entrada, '%Y-%m-%d').date()
+        salida = datetime.strptime(fecha_salida, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Formato de fecha invalido (YYYY-MM-DD)'}), 400
+
+    if entrada >= salida:
+        return jsonify({'error': 'La fecha de entrada debe ser anterior a la de salida'}), 400
+
+    disponible = app_instance.check_disponibilidad(id, entrada, salida)
+    noches = (salida - entrada).days
+    precio_total = float(alojamiento.precio_noche) * noches
+
+    return jsonify({
+        'disponible': disponible,
+        'alojamiento_id': id,
+        'fecha_entrada': fecha_entrada,
+        'fecha_salida': fecha_salida,
+        'noches': noches,
+        'precio_estimado': precio_total
+    })
 
 
 @alojamiento_bp.route('/alojamientos', methods=['POST'])
