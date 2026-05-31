@@ -66,6 +66,10 @@ class ReservasApp:
     def update_alojamiento(self, alojamiento_id, **kwargs):
         return self.alojamiento_repo.update(alojamiento_id, **kwargs)
 
+    def check_disponibilidad(self, alojamiento_id, fecha_entrada, fecha_salida):
+        return self.reserva_repo.check_disponibilidad(
+            alojamiento_id, fecha_entrada, fecha_salida)
+
     def delete_alojamiento(self, alojamiento_id):
         if self.reserva_repo.has_active_for_alojamiento(alojamiento_id):
             raise ValueError("Tiene reservas activas asociadas")
