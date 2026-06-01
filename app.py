@@ -1,4 +1,5 @@
-from flask import Flask
+import os
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 
 from backend.entities.base import engine, Base
@@ -21,8 +22,18 @@ import backend.routes.reserva_routes as reserva_mod
 
 
 def create_app():
-    app = Flask(__name__)
+    frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
+    app = Flask(__name__, static_folder=frontend_dir, static_url_path='')
     CORS(app, supports_credentials=True)
+
+    # Servir el frontend (HTML/CSS/JS)
+    @app.route('/')
+    def index():
+        return send_from_directory(frontend_dir, 'index.html')
+
+    @app.route('/<path:path>')
+    def static_files(path):
+        return send_from_directory(frontend_dir, path)
 
     # Crear tablas en la base de datos
     Base.metadata.create_all(bind=engine)
