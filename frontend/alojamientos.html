@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alojamientos - Reservas Turisticas</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">Reservas Turisticas</a>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">Alojamientos disponibles</h1>
+
+        <!-- Filtros -->
+        <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+            <select id="filtro-ciudad" style="padding:0.5rem; border-radius:4px; border:1px solid #ddd;">
+                <option value="">Todas las ciudades</option>
+            </select>
+            <select id="filtro-tipo" style="padding:0.5rem; border-radius:4px; border:1px solid #ddd;">
+                <option value="">Todos los tipos</option>
+                <option value="hotel">Hotel</option>
+                <option value="apartamento">Apartamento</option>
+                <option value="hostal">Hostal</option>
+                <option value="casa">Casa rural</option>
+            </select>
+            <button onclick="loadAlojamientos()" class="btn btn-primary" style="width:auto;">Buscar</button>
+        </div>
+
+        <div id="alojamientos-grid" class="alojamientos-grid">
+            <p>Cargando...</p>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        updateNav();
+
+        async function loadAlojamientos() {
+            const ciudad = document.getElementById('filtro-ciudad').value;
+            const tipo = document.getElementById('filtro-tipo').value;
+
+            const res = await getAlojamientos({ ciudad, tipo });
+            const grid = document.getElementById('alojamientos-grid');
+
+            if (!res.ok || res.data.length === 0) {
+                grid.innerHTML = '<p>No se encontraron alojamientos.</p>';
+                return;
+            }
+
+            grid.innerHTML = res.data.map(a => `
+                <div class="aloj-card">
+                    <img src="${a.imagen_url || 'https://via.placeholder.com/400x200?text=Sin+imagen'}"
+                         alt="${a.titulo}"
+                         onerror="this.src='https://via.placeholder.com/400x200?text=Sin+imagen'">
+                    <div class="card-body">
+                        <span class="tipo">${a.tipo}</span>
+                        <h3>${a.titulo}</h3>
+                        <p class="info">${a.ciudad} — ${a.direccion || ''}</p>
+                        <p class="info">Capacidad: ${a.capacidad} huespedes</p>
+                        <p class="info">${a.servicios || ''}</p>
+                        <p class="precio">${a.precio_noche} &euro;/noche</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cargar ciudades dinamicamente
+        async function loadCiudades() {
+            const res = await getAlojamientos();
+            if (res.ok) {
+                const ciudades = [...new Set(res.data.map(a => a.ciudad))];
+                const select = document.getElementById('filtro-ciudad');
+                ciudades.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        loadCiudades();
+        loadAlojamientos();
+    </script>
+</body>
+</html>
