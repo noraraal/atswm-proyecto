@@ -1,6 +1,6 @@
-// Funciones comunes de autenticacion para las paginas
+// Funciones comunes de autenticación para las páginas
 
-// Actualiza la navbar segun si el usuario esta logueado o no
+// Actualiza la navbar según si el usuario está logueado o no
 async function updateNav() {
     const navLinks = document.getElementById('nav-links');
     const res = await getMe();
@@ -11,12 +11,12 @@ async function updateNav() {
             <a href="/alojamientos.html">Alojamientos</a>
             <a href="/mis-reservas.html">Mis reservas</a>
             ${res.data.rol === 'admin' ? '<a href="/admin.html">Admin</a>' : ''}
-            <a href="#" onclick="doLogout()" class="btn-nav">Cerrar sesion</a>
+            <a href="#" onclick="doLogout()" class="btn-nav">Cerrar sesión</a>
         `;
     } else {
         navLinks.innerHTML = `
             <a href="/alojamientos.html">Alojamientos</a>
-            <a href="/login.html" class="btn-nav">Iniciar sesion</a>
+            <a href="/login.html" class="btn-nav">Iniciar sesión</a>
             <a href="/registro.html">Registrarse</a>
         `;
     }

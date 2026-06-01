@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alojamientos - Reservas Turisticas</title>
+    <title>Alojamientos - Reservas Turísticas</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <nav>
-        <a href="/" class="logo">Reservas Turisticas</a>
+        <a href="/" class="logo">Reservas Turísticas</a>
         <div class="nav-links" id="nav-links"></div>
     </nav>
 
@@ -61,7 +61,7 @@
                         <span class="tipo">${a.tipo}</span>
                         <h3>${a.titulo}</h3>
                         <p class="info">${a.ciudad} — ${a.direccion || ''}</p>
-                        <p class="info">Capacidad: ${a.capacidad} huespedes</p>
+                        <p class="info">Capacidad: ${a.capacidad} huéspedes</p>
                         <p class="info">${a.servicios || ''}</p>
                         <p class="precio">${a.precio_noche} &euro;/noche</p>
                     </div>
@@ -69,7 +69,7 @@
             `).join('');
         }
 
-        // Cargar ciudades dinamicamente
+        // Cargar ciudades dinámicamente
         async function loadCiudades() {
             const res = await getAlojamientos();
             if (res.ok) {
