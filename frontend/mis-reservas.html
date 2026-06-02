@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis reservas - Reservas Turísticas</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">Reservas Turísticas</a>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">Mis reservas</h1>
+        <div id="alert" class="alert"></div>
+        <div id="reservas-list" class="reservas-list">
+            <p>Cargando...</p>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        updateNav();
+
+        async function loadReservas() {
+            const me = await getMe();
+            if (!me.ok) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const res = await getMisReservas();
+            const container = document.getElementById('reservas-list');
+
+            if (!res.ok || res.data.length === 0) {
+                container.innerHTML = '<p>No tienes reservas todavía. <a href="/alojamientos.html">Buscar alojamientos</a></p>';
+                return;
+            }
+
+            // Cargar nombres de alojamientos
+            const alojamientos = {};
+            for (const r of res.data) {
+                if (!alojamientos[r.alojamiento_id]) {
+                    const a = await getAlojamiento(r.alojamiento_id);
+                    if (a.ok) alojamientos[r.alojamiento_id] = a.data;
+                }
+            }
+
+            container.innerHTML = res.data.map(r => {
+                const aloj = alojamientos[r.alojamiento_id];
+                const nombre = aloj ? aloj.titulo : 'Alojamiento #' + r.alojamiento_id;
+                const ciudad = aloj ? aloj.ciudad : '';
+                const noches = daysBetween(r.fecha_entrada, r.fecha_salida);
+                const esFutura = new Date(r.fecha_entrada) > new Date();
+                const puedeCancelar = r.estado === 'confirmada' && esFutura;
+
+                return `
+                <div class="reserva-card">
+                    <div>
+                        <h3 style="margin-bottom:0.3rem; color:#2c3e50;">${nombre}</h3>
+                        <p class="info">${ciudad} · ${noches} noches</p>
+                        <p class="info">${formatDate(r.fecha_entrada)} → ${formatDate(r.fecha_salida)}</p>
+                        <p class="info">${r.num_huespedes} huéspedes</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span class="estado estado-${r.estado}">${r.estado}</span>
+                        <p class="precio" style="margin-top:0.5rem;">${r.precio_total} &euro;</p>
+                        ${puedeCancelar ? `<button class="btn btn-danger" style="margin-top:0.5rem; padding:0.4rem 1rem; font-size:0.85rem;" onclick="cancelar(${r.id})">Cancelar</button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function cancelar(id) {
+            if (!confirm('¿Seguro que quieres cancelar esta reserva?')) return;
+
+            const res = await cancelarReserva(id);
+            if (res.ok) {
+                showAlert('alert', 'Reserva cancelada correctamente', 'success');
+                loadReservas();
+            } else {
+                showAlert('alert', res.data.error, 'error');
+            }
+        }
+
+        function daysBetween(d1, d2) {
+            const date1 = new Date(d1);
+            const date2 = new Date(d2);
+            return Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        loadReservas();
+    </script>
+</body>
+</html>
