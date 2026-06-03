@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Reservas Turísticas</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+        }
+        .admin-tabs button {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .admin-tabs button.active {
+            color: #2c3e50;
+            font-weight: bold;
+            border-bottom-color: #3498db;
+        }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #2c3e50;
+            color: white;
+            padding: 0.7rem;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+        td {
+            padding: 0.6rem 0.7rem;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+        }
+        tr:hover { background: #f8f9fa; }
+        .btn-sm {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 0.3rem;
+        }
+        .btn-edit { background: #f39c12; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-add {
+            background: #27ae60;
+            color: white;
+            padding: 0.5rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h2 { margin-bottom: 1rem; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">Reservas Turísticas</a>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <div class="container">
+        <h1 class="page-title">Panel de administración</h1>
+        <div id="admin-alert" class="alert"></div>
+
+        <div class="admin-tabs">
+            <button class="active" onclick="switchTab('alojamientos')">Alojamientos</button>
+            <button onclick="switchTab('reservas')">Reservas</button>
+            <button onclick="switchTab('usuarios')">Usuarios</button>
+        </div>
+
+        <!-- ALOJAMIENTOS -->
+        <div id="tab-alojamientos" class="admin-section active">
+            <button class="btn-add" onclick="openAlojForm()">+ Nuevo alojamiento</button>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Título</th><th>Tipo</th><th>Ciudad</th><th>Precio/noche</th><th>Capacidad</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="aloj-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- RESERVAS -->
+        <div id="tab-reservas" class="admin-section">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Cliente</th><th>Alojamiento</th><th>Entrada</th><th>Salida</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="reservas-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- USUARIOS -->
+        <div id="tab-usuarios" class="admin-section">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Fecha alta</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="usuarios-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para formulario de alojamiento -->
+    <div class="modal-overlay" id="aloj-modal">
+        <div class="modal">
+            <h2 id="aloj-modal-title">Nuevo alojamiento</h2>
+            <form id="aloj-form">
+                <input type="hidden" id="aloj-edit-id">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="aloj-titulo" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="aloj-tipo" required>
+                        <option value="hotel">Hotel</option>
+                        <option value="apartamento">Apartamento</option>
+                        <option value="hostal">Hostal</option>
+                        <option value="casa">Casa rural</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ciudad</label>
+                    <input type="text" id="aloj-ciudad" required>
+                </div>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="aloj-direccion">
+                </div>
+                <div class="form-group">
+                    <label>Precio/noche (€)</label>
+                    <input type="number" id="aloj-precio" step="0.01" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Capacidad (huéspedes)</label>
+                    <input type="number" id="aloj-capacidad" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <input type="text" id="aloj-descripcion">
+                </div>
+                <div class="form-group">
+                    <label>Servicios (separados por coma)</label>
+                    <input type="text" id="aloj-servicios" placeholder="wifi,piscina,parking">
+                </div>
+                <div class="form-group">
+                    <label>URL de imagen</label>
+                    <input type="url" id="aloj-imagen">
+                </div>
+                <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button>
+                    <button type="button" class="btn" style="flex:1; background:#ccc;" onclick="closeModal('aloj-modal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        updateNav();
+
+        // Verificar que es admin
+        (async () => {
+            const me = await getMe();
+            if (!me.ok || me.data.rol !== 'admin') {
+                window.location.href = '/';
+                return;
+            }
+            loadAlojamientos();
+            loadReservas();
+            loadUsuarios();
+        })();
+
+        // --- Tabs ---
+        function switchTab(tab) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // --- ALOJAMIENTOS ---
+        async function loadAlojamientos() {
+            const res = await getAlojamientos();
+            if (!res.ok) return;
+            document.getElementById('aloj-tbody').innerHTML = res.data.map(a => `
+                <tr>
+                    <td>${a.id}</td>
+                    <td>${a.titulo}</td>
+                    <td>${a.tipo}</td>
+                    <td>${a.ciudad}</td>
+                    <td>${a.precio_noche} €</td>
+                    <td>${a.capacidad}</td>
+                    <td>
+                        <button class="btn-sm btn-edit" onclick="editAloj(${a.id})">Editar</button>
+                        <button class="btn-sm btn-delete" onclick="deleteAloj(${a.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openAlojForm() {
+            document.getElementById('aloj-modal-title').textContent = 'Nuevo alojamiento';
+            document.getElementById('aloj-form').reset();
+            document.getElementById('aloj-edit-id').value = '';
+            document.getElementById('aloj-modal').classList.add('active');
+        }
+
+        async function editAloj(id) {
+            const res = await getAlojamiento(id);
+            if (!res.ok) return;
+            const a = res.data;
+            document.getElementById('aloj-modal-title').textContent = 'Editar alojamiento';
+            document.getElementById('aloj-edit-id').value = a.id;
+            document.getElementById('aloj-titulo').value = a.titulo;
+            document.getElementById('aloj-tipo').value = a.tipo;
+            document.getElementById('aloj-ciudad').value = a.ciudad;
+            document.getElementById('aloj-direccion').value = a.direccion || '';
+            document.getElementById('aloj-precio').value = a.precio_noche;
+            document.getElementById('aloj-capacidad').value = a.capacidad;
+            document.getElementById('aloj-descripcion').value = a.descripcion || '';
+            document.getElementById('aloj-servicios').value = a.servicios || '';
+            document.getElementById('aloj-imagen').value = a.imagen_url || '';
+            document.getElementById('aloj-modal').classList.add('active');
+        }
+
+        document.getElementById('aloj-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('aloj-edit-id').value;
+            const body = {
+                titulo: document.getElementById('aloj-titulo').value,
+                tipo: document.getElementById('aloj-tipo').value,
+                ciudad: document.getElementById('aloj-ciudad').value,
+                direccion: document.getElementById('aloj-direccion').value,
+                precio_noche: parseFloat(document.getElementById('aloj-precio').value),
+                capacidad: parseInt(document.getElementById('aloj-capacidad').value),
+                descripcion: document.getElementById('aloj-descripcion').value,
+                servicios: document.getElementById('aloj-servicios').value,
+                imagen_url: document.getElementById('aloj-imagen').value,
+            };
+
+            let res;
+            if (id) {
+                res = await request('PUT', '/alojamientos/' + id, body);
+            } else {
+                res = await request('POST', '/alojamientos', body);
+            }
+
+            if (res.ok) {
+                closeModal('aloj-modal');
+                showAlert('admin-alert', id ? 'Alojamiento actualizado' : 'Alojamiento creado', 'success');
+                loadAlojamientos();
+            } else {
+                alert(res.data.error);
+            }
+        });
+
+        async function deleteAloj(id) {
+            if (!confirm('¿Eliminar este alojamiento?')) return;
+            const res = await request('DELETE', '/alojamientos/' + id);
+            if (res.ok) {
+                showAlert('admin-alert', 'Alojamiento eliminado', 'success');
+                loadAlojamientos();
+            } else {
+                showAlert('admin-alert', res.data.error, 'error');
+            }
+        }
+
+        // --- RESERVAS ---
+        async function loadReservas() {
+            const res = await getMisReservas();
+            if (!res.ok) return;
+            document.getElementById('reservas-tbody').innerHTML = res.data.map(r => `
+                <tr>
+                    <td>${r.id}</td>
+                    <td>${r.cliente_id}</td>
+                    <td>${r.alojamiento_id}</td>
+                    <td>${r.fecha_entrada}</td>
+                    <td>${r.fecha_salida}</td>
+                    <td>${r.precio_total} €</td>
+                    <td><span class="estado estado-${r.estado}">${r.estado}</span></td>
+                    <td>
+                        ${r.estado === 'confirmada' ? `<button class="btn-sm btn-edit" onclick="cambiarEstado(${r.id}, 'cancelada')">Cancelar</button>` : ''}
+                        <button class="btn-sm btn-delete" onclick="deleteReserva(${r.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function cambiarEstado(id, estado) {
+            const res = await request('PATCH', '/reservas/' + id, { estado });
+            if (res.ok) {
+                showAlert('admin-alert', 'Estado actualizado', 'success');
+                loadReservas();
+            } else {
+                showAlert('admin-alert', res.data.error, 'error');
+            }
+        }
+
+        async function deleteReserva(id) {
+            if (!confirm('¿Eliminar esta reserva?')) return;
+            const res = await request('DELETE', '/reservas/' + id);
+            if (res.ok) {
+                showAlert('admin-alert', 'Reserva eliminada', 'success');
+                loadReservas();
+            } else {
+                showAlert('admin-alert', res.data.error, 'error');
+            }
+        }
+
+        // --- USUARIOS ---
+        async function loadUsuarios() {
+            const res = await request('GET', '/usuarios');
+            if (!res.ok) return;
+            document.getElementById('usuarios-tbody').innerHTML = res.data.map(u => `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${u.nombre}</td>
+                    <td>${u.email}</td>
+                    <td><span class="estado ${u.rol === 'admin' ? 'estado-cancelada' : 'estado-confirmada'}">${u.rol}</span></td>
+                    <td>${u.fecha_alta ? new Date(u.fecha_alta).toLocaleDateString('es-ES') : ''}</td>
+                    <td>
+                        <button class="btn-sm btn-delete" onclick="deleteUsuario(${u.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function deleteUsuario(id) {
+            if (!confirm('¿Eliminar este usuario?')) return;
+            const res = await request('DELETE', '/usuarios/' + id);
+            if (res.ok) {
+                showAlert('admin-alert', 'Usuario eliminado', 'success');
+                loadUsuarios();
+            } else {
+                showAlert('admin-alert', res.data.error, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
