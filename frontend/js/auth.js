@@ -1,5 +1,8 @@
 // Funciones comunes de autenticación para las páginas
 
+// Detectar base path (producción bajo /reservas/, local bajo /)
+const BASE_PATH = window.location.pathname.startsWith('/reservas') ? '/reservas' : '';
+
 // Actualiza la navbar según si el usuario está logueado o no
 async function updateNav() {
     const navLinks = document.getElementById('nav-links');
@@ -8,23 +11,23 @@ async function updateNav() {
     if (res.ok) {
         navLinks.innerHTML = `
             <span id="nav-user">Hola, ${res.data.nombre}</span>
-            <a href="/alojamientos.html">Alojamientos</a>
-            <a href="/mis-reservas.html">Mis reservas</a>
-            ${res.data.rol === 'admin' ? '<a href="/admin.html">Admin</a>' : ''}
+            <a href="${BASE_PATH}/alojamientos.html">Alojamientos</a>
+            <a href="${BASE_PATH}/mis-reservas.html">Mis reservas</a>
+            ${res.data.rol === 'admin' ? `<a href="${BASE_PATH}/admin.html">Admin</a>` : ''}
             <a href="#" onclick="doLogout()" class="btn-nav">Cerrar sesión</a>
         `;
     } else {
         navLinks.innerHTML = `
-            <a href="/alojamientos.html">Alojamientos</a>
-            <a href="/login.html" class="btn-nav">Iniciar sesión</a>
-            <a href="/registro.html">Registrarse</a>
+            <a href="${BASE_PATH}/alojamientos.html">Alojamientos</a>
+            <a href="${BASE_PATH}/login.html" class="btn-nav">Iniciar sesión</a>
+            <a href="${BASE_PATH}/registro.html">Registrarse</a>
         `;
     }
 }
 
 async function doLogout() {
     await logout();
-    window.location.href = '/';
+    window.location.href = BASE_PATH + '/';
 }
 
 // Mostrar alerta en formularios

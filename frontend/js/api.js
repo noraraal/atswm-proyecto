@@ -1,5 +1,6 @@
-// Base URL de la API
-const API = '/api/v1';
+// Base URL de la API (detecta si estamos bajo /reservas/ en producción)
+const BASE = window.location.pathname.startsWith('/reservas') ? '/reservas' : '';
+const API = BASE + '/api/v1';
 
 // --- Utilidades ---
 

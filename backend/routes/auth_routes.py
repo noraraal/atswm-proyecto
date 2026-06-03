@@ -46,7 +46,7 @@ def login():
         value=token,
         httponly=True,
         samesite='Lax',
-        path='/api'
+        path='/'
     )
     return resp
 
@@ -57,5 +57,5 @@ def logout():
     if token:
         delete_session(token)
     resp = make_response(jsonify({'message': 'Logout correcto'}))
-    resp.delete_cookie('session', path='/api')
+    resp.delete_cookie('session', path='/')
     return resp
