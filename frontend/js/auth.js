@@ -41,3 +41,15 @@ function showAlert(id, message, type) {
 function hideAlert(id) {
     document.getElementById(id).style.display = 'none';
 }
+
+// Reescribir enlaces absolutos para que funcionen bajo /reservas/
+if (BASE_PATH) {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('a[href^="/"]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href && !href.startsWith(BASE_PATH)) {
+                a.setAttribute('href', BASE_PATH + href);
+            }
+        });
+    });
+}

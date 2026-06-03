@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle - Reservas Turísticas</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <style>
         .detalle {
             display: grid;
@@ -91,8 +91,8 @@
         </div>
     </div>
 
-    <script src="/js/api.js"></script>
-    <script src="/js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         updateNav();
 
@@ -100,7 +100,7 @@
         const alojId = params.get('id');
 
         if (!alojId) {
-            window.location.href = '/alojamientos.html';
+            window.location.href = BASE_PATH + '/alojamientos.html';
         }
 
         async function loadDetalle() {
@@ -182,7 +182,7 @@
                 const me = await getMe();
                 if (!me.ok) {
                     showAlert('reserva-alert', 'Debes iniciar sesión para reservar.', 'error');
-                    setTimeout(() => window.location.href = '/login.html', 1500);
+                    setTimeout(() => window.location.href = BASE_PATH + '/login.html', 1500);
                     return;
                 }
 
@@ -195,7 +195,7 @@
                 if (res.ok) {
                     showAlert('reserva-alert', `¡Reserva confirmada! Precio total: ${res.data.precio_total} €`, 'success');
                     document.getElementById('reserva-form').style.display = 'none';
-                    setTimeout(() => window.location.href = '/mis-reservas.html', 2000);
+                    setTimeout(() => window.location.href = BASE_PATH + '/mis-reservas.html', 2000);
                 } else {
                     showAlert('reserva-alert', res.data.error, 'error');
                 }

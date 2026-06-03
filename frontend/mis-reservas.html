@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis reservas - Reservas Turísticas</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <nav>
@@ -20,15 +20,15 @@
         </div>
     </div>
 
-    <script src="/js/api.js"></script>
-    <script src="/js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         updateNav();
 
         async function loadReservas() {
             const me = await getMe();
             if (!me.ok) {
-                window.location.href = '/login.html';
+                window.location.href = BASE_PATH + '/login.html';
                 return;
             }
 
