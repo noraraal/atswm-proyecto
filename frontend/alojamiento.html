@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle - Reservas Turísticas</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .detalle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .detalle img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .detalle-info h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .detalle-info .tipo {
+            display: inline-block;
+            background: #eee;
+            padding: 0.2rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .detalle-info .dato {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: #555;
+        }
+        .detalle-info .dato strong {
+            color: #2c3e50;
+        }
+        .servicios-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.3rem;
+        }
+        .servicio-tag {
+            background: #eaf4fd;
+            color: #3498db;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .reserva-form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 1.5rem;
+        }
+        .reserva-form h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        #precio-estimado {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">Reservas Turísticas</a>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <div class="container">
+        <a href="/alojamientos.html" style="color:#3498db; text-decoration:none; font-size:0.9rem;">← Volver a alojamientos</a>
+
+        <div id="detalle-content">
+            <p>Cargando...</p>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        updateNav();
+
+        const params = new URLSearchParams(window.location.search);
+        const alojId = params.get('id');
+
+        if (!alojId) {
+            window.location.href = '/alojamientos.html';
+        }
+
+        async function loadDetalle() {
+            const res = await getAlojamiento(alojId);
+            if (!res.ok) {
+                document.getElementById('detalle-content').innerHTML = '<p>Alojamiento no encontrado.</p>';
+                return;
+            }
+
+            const a = res.data;
+            document.title = a.titulo + ' - Reservas Turísticas';
+
+            const servicios = a.servicios
+                ? a.servicios.split(',').map(s => `<span class="servicio-tag">${s.trim()}</span>`).join('')
+                : '<span style="color:#999">No especificados</span>';
+
+            // Fecha mínima: mañana
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            const pasado = new Date();
+            pasado.setDate(pasado.getDate() + 2);
+            const minSalida = pasado.toISOString().split('T')[0];
+
+            document.getElementById('detalle-content').innerHTML = `
+                <div class="detalle">
+                    <div>
+                        <img src="${a.imagen_url || 'https://via.placeholder.com/600x300?text=Sin+imagen'}"
+                             alt="${a.titulo}"
+                             onerror="this.src='https://via.placeholder.com/600x300?text=Sin+imagen'">
+                        <p style="margin-top:1rem; color:#666;">${a.descripcion || ''}</p>
+                    </div>
+                    <div class="detalle-info">
+                        <h1>${a.titulo}</h1>
+                        <span class="tipo">${a.tipo}</span>
+                        <p class="dato"><strong>Ciudad:</strong> ${a.ciudad}</p>
+                        <p class="dato"><strong>Dirección:</strong> ${a.direccion || 'No especificada'}</p>
+                        <p class="dato"><strong>Capacidad:</strong> ${a.capacidad} huéspedes</p>
+                        <p class="dato"><strong>Precio:</strong> <span style="color:#27ae60; font-weight:bold; font-size:1.2rem;">${a.precio_noche} €/noche</span></p>
+                        <p class="dato"><strong>Servicios:</strong></p>
+                        <div class="servicios-list">${servicios}</div>
+                    </div>
+                </div>
+
+                <div class="reserva-form" id="reserva-section">
+                    <h2>Hacer una reserva</h2>
+                    <div id="reserva-alert" class="alert"></div>
+                    <form id="reserva-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fecha_entrada">Fecha de entrada</label>
+                                <input type="date" id="fecha_entrada" min="${minDate}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha_salida">Fecha de salida</label>
+                                <input type="date" id="fecha_salida" min="${minSalida}" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="num_huespedes">Número de huéspedes (máx. ${a.capacidad})</label>
+                            <input type="number" id="num_huespedes" min="1" max="${a.capacidad}" value="1" required>
+                        </div>
+                        <div id="precio-estimado"></div>
+                        <button type="submit" class="btn btn-primary">Confirmar reserva</button>
+                    </form>
+                </div>
+            `;
+
+            // Calcular precio al cambiar fechas
+            document.getElementById('fecha_entrada').addEventListener('change', calcularPrecio);
+            document.getElementById('fecha_salida').addEventListener('change', calcularPrecio);
+
+            // Enviar reserva
+            document.getElementById('reserva-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideAlert('reserva-alert');
+
+                const me = await getMe();
+                if (!me.ok) {
+                    showAlert('reserva-alert', 'Debes iniciar sesión para reservar.', 'error');
+                    setTimeout(() => window.location.href = '/login.html', 1500);
+                    return;
+                }
+
+                const fechaEntrada = document.getElementById('fecha_entrada').value;
+                const fechaSalida = document.getElementById('fecha_salida').value;
+                const numHuespedes = parseInt(document.getElementById('num_huespedes').value);
+
+                const res = await crearReserva(alojId, fechaEntrada, fechaSalida, numHuespedes);
+
+                if (res.ok) {
+                    showAlert('reserva-alert', `¡Reserva confirmada! Precio total: ${res.data.precio_total} €`, 'success');
+                    document.getElementById('reserva-form').style.display = 'none';
+                    setTimeout(() => window.location.href = '/mis-reservas.html', 2000);
+                } else {
+                    showAlert('reserva-alert', res.data.error, 'error');
+                }
+            });
+        }
+
+        function calcularPrecio() {
+            const entrada = document.getElementById('fecha_entrada').value;
+            const salida = document.getElementById('fecha_salida').value;
+            const precioDiv = document.getElementById('precio-estimado');
+
+            if (entrada && salida) {
+                const d1 = new Date(entrada);
+                const d2 = new Date(salida);
+                const noches = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+
+                if (noches > 0) {
+                    const params2 = new URLSearchParams(window.location.search);
+                    // Usamos el precio que ya tenemos en la página
+                    const precioTexto = document.querySelector('.detalle-info .dato span[style]');
+                    const precioNoche = parseFloat(precioTexto.textContent);
+                    const total = (precioNoche * noches).toFixed(2);
+                    precioDiv.textContent = `${noches} noches × ${precioNoche} € = ${total} € total`;
+                } else {
+                    precioDiv.textContent = '';
+                }
+            }
+        }
+
+        loadDetalle();
+    </script>
+</body>
+</html>

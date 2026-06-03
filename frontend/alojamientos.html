@@ -53,7 +53,7 @@
             }
 
             grid.innerHTML = res.data.map(a => `
-                <div class="aloj-card">
+                <a href="/alojamiento.html?id=${a.id}" class="aloj-card" style="text-decoration:none; color:inherit;">
                     <img src="${a.imagen_url || 'https://via.placeholder.com/400x200?text=Sin+imagen'}"
                          alt="${a.titulo}"
                          onerror="this.src='https://via.placeholder.com/400x200?text=Sin+imagen'">
@@ -65,7 +65,7 @@
                         <p class="info">${a.servicios || ''}</p>
                         <p class="precio">${a.precio_noche} &euro;/noche</p>
                     </div>
-                </div>
+                </a>
             `).join('');
         }
 
